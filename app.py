@@ -39,7 +39,7 @@ with ui.sidebar(open='open'):
         inline=False # Display the checkboxes inline or stacked (True/False)
     )
     ui.hr() # Text for the hyperlink
-    ui.a("GitHub", href="https://github.com/sshres10/cintel-02-data", target="_blank") # Open the link in a new tab
+    ui.a("GitHub", href="https://github.com/sshres10/cintel-03-reactive", target="_blank") # Open the link in a new tab
 
 # Define a consistent color scheme for plots
 color_discrete_map = {
