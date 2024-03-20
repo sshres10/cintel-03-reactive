@@ -1,5 +1,5 @@
 # Import necessary libraries
-import plotly.express as px  
+import plotly.express as px
 from shiny.express import input, ui, render
 from shinywidgets import render_plotly
 from shiny import reactive
@@ -12,50 +12,56 @@ penguins_df = palmerpenguins.load_penguins()
 ui.page_opts(title="Penguin Data Shrestha", fillable=True)
 
 # Create a sidebar that is open by default
-with ui.sidebar(open='open'):
-    ui.h2("Sidebar_Shrestha") # Add a second-level header to the sidebar
+with ui.sidebar(open="open"):
+    ui.h2("Sidebar_Shrestha")  # Add a second-level header to the sidebar
     ui.input_selectize(
-        "selected_attribute", # Name of the input
-        "Choose a column:", # Label for the dropdown
-        choices=["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"]
+        "selected_attribute",  # Name of the input
+        "Choose a column:",  # Label for the dropdown
+        choices=["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
     )
     ui.input_numeric(
         "plotly_bin_count",  # Name of the input
-        "Number of bins for Plotly histogram", # Label for the numeric input
-        value=10  # Adding a default value for clarity
+        "Number of bins for Plotly histogram",  # Label for the numeric input
+        value=10,  # Adding a default value for clarity
     )
     ui.input_slider(
-        "seaborn_bin_count", # Name of the input
-        "Number of bins for Seaborn histogram",   # Label for the slider
+        "seaborn_bin_count",  # Name of the input
+        "Number of bins for Seaborn histogram",  # Label for the slider
         min=1,  # Minimum value for the slider
-        max=50, # Maximum value for the slider
-        value=10 # Default value for the slider
+        max=50,  # Maximum value for the slider
+        value=10,  # Default value for the slider
     )
     ui.input_checkbox_group(
         "selected_species",  # Name of the input
         "Filter by species:",  # Label for the checkbox group
-        choices=["Adelie", "Gentoo", "Chinstrap"], # Checkbox options
-        selected=["Adelie", "Gentoo", "Chinstrap"], # Default selected options
-        inline=False # Display the checkboxes inline or stacked (True/False)
+        choices=["Adelie", "Gentoo", "Chinstrap"],  # Checkbox options
+        selected=["Adelie", "Gentoo", "Chinstrap"],  # Default selected options
+        inline=False,  # Display the checkboxes inline or stacked (True/False)
     )
-    ui.hr() # Text for the hyperlink
-    ui.a("GitHub", href="https://github.com/sshres10/cintel-03-reactive", target="_blank") # Open the link in a new tab
+    ui.hr()  # Text for the hyperlink
+    ui.a(
+        "GitHub", href="https://github.com/sshres10/cintel-03-reactive", target="_blank"
+    )  # Open the link in a new tab
 
 # Define a consistent color scheme for plots
 color_discrete_map = {
-    'Adelie': '#1f77b4', # blue
-    'Gentoo': '#ff7f0e', # orange
-    'Chinstrap': '#2ca02c', # green
+    "Adelie": "#1f77b4",  # blue
+    "Gentoo": "#ff7f0e",  # orange
+    "Chinstrap": "#2ca02c",  # green
 }
 with ui.layout_columns():  # Define the main layout of the page with two columns
     # Histogram Plot 1
     @render_plotly
     def plot1():
         attr = input.selected_attribute() or "bill_length_mm"
-        fig = px.histogram(penguins_df, x=attr, nbins=input.plotly_bin_count(),
-                           title=f"Distribution of {attr.replace('_', ' ')}",
-                           labels={attr: attr.replace('_', ' ').title()},
-                           color_discrete_map=color_discrete_map)
+        fig = px.histogram(
+            filtered_data(),
+            x=attr,
+            nbins=input.plotly_bin_count(),
+            title=f"Distribution of {attr.replace('_', ' ')}",
+            labels={attr: attr.replace("_", " ").title()},
+            color_discrete_map=color_discrete_map,
+        )
         fig.update_layout(template="plotly_white", showlegend=False)
         return fig
 
@@ -63,10 +69,14 @@ with ui.layout_columns():  # Define the main layout of the page with two columns
     @render_plotly
     def plot2():
         attr = input.selected_attribute() or "flipper_length_mm"
-        fig = px.histogram(penguins_df, x=attr, nbins=input.plotly_bin_count(),
-                           title=f"Distribution of {attr.replace('_', ' ')}",
-                           labels={attr: attr.replace('_', ' ').title()},
-                           color_discrete_map=color_discrete_map)
+        fig = px.histogram(
+            filtered_data(),
+            x=attr,
+            nbins=input.plotly_bin_count(),
+            title=f"Distribution of {attr.replace('_', ' ')}",
+            labels={attr: attr.replace("_", " ").title()},
+            color_discrete_map=color_discrete_map,
+        )
         fig.update_layout(template="plotly_white", showlegend=False)
         return fig
 
@@ -77,25 +87,30 @@ with ui.layout_columns():  # Define the main layout of the page with two columns
         @render_plotly
         def plotly_scatterplot():
             fig = px.scatter(
-                penguins_df,
+                filtered_data(),
                 x="bill_length_mm",
                 y="bill_depth_mm",
                 color="species",
                 title="Scatterplot by Species",
-                labels={"bill_length_mm": "Bill Length (mm)", "bill_depth_mm": "Bill Depth (mm)"},
-                color_discrete_map=color_discrete_map)
+                labels={
+                    "bill_length_mm": "Bill Length (mm)",
+                    "bill_depth_mm": "Bill Depth (mm)",
+                },
+                color_discrete_map=color_discrete_map,
+            )
             fig.update_layout(template="plotly_white")
             return fig
 
     # DataTable
     @render.data_frame
     def render_penguins_df():
-        return penguins_df
+        return filtered_data()
 
     # Data Grid
     @render.data_frame
     def render_penguins_data_grid():
-        return render.DataGrid(penguins_df)  
+        return filtered_data()
+
 
 # --------------------------------------------------------
 # Reactive calculations and effects
@@ -106,7 +121,8 @@ with ui.layout_columns():  # Define the main layout of the page with two columns
 # The function will be called whenever an input functions used to generate that output changes.
 # Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
 
+
 @reactive.calc
 def filtered_data():
-    isSpeciesMatch = penguins_df["species"].isin(input.selected_species_list())
+    isSpeciesMatch = penguins_df["species"].isin(input.selected_species())
     return penguins_df[isSpeciesMatch]
