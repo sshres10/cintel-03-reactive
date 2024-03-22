@@ -18,10 +18,11 @@ with ui.sidebar(open="open"):
         "selected_attribute",  # Name of the input
         "Choose a column:",  # Label for the dropdown
         choices=["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
+        selected="bill_length_mm", 
     )
     ui.input_numeric(
         "plotly_bin_count",  # Name of the input
-        "Number of bins for Plotly histogram",  # Label for the numeric input
+        "Histogram Bin Count(Plotly Scatterplot: Species",  # Label for the numeric input
         value=10,  # Adding a default value for clarity
     )
     ui.input_slider(
@@ -53,9 +54,10 @@ with ui.layout_columns():  # Define the main layout of the page with two columns
     # Histogram Plot 1
     @render_plotly
     def plot1():
+        df = filtered_data()
         attr = input.selected_attribute() or "bill_length_mm"
         fig = px.histogram(
-            filtered_data(),
+            df,
             x=attr,
             nbins=input.plotly_bin_count(),
             title=f"Distribution of {attr.replace('_', ' ')}",
@@ -68,9 +70,10 @@ with ui.layout_columns():  # Define the main layout of the page with two columns
     # Histogram Plot 2
     @render_plotly
     def plot2():
+        df = filtered_data()
         attr = input.selected_attribute() or "flipper_length_mm"
         fig = px.histogram(
-            filtered_data(),
+            df,
             x=attr,
             nbins=input.plotly_bin_count(),
             title=f"Distribution of {attr.replace('_', ' ')}",
@@ -86,8 +89,9 @@ with ui.layout_columns():  # Define the main layout of the page with two columns
 
         @render_plotly
         def plotly_scatterplot():
+            df = filtered_data()
             fig = px.scatter(
-                filtered_data(),
+                df,
                 x="bill_length_mm",
                 y="bill_depth_mm",
                 color="species",
@@ -124,5 +128,14 @@ with ui.layout_columns():  # Define the main layout of the page with two columns
 
 @reactive.calc
 def filtered_data():
-    isSpeciesMatch = penguins_df["species"].isin(input.selected_species())
-    return penguins_df[isSpeciesMatch]
+    selected_species = input.selected_species()
+    selected_attribute = input.selected_attribute()
+
+# Filter the DataFrame based on the selected species
+    filtered_df = penguins_df[penguins_df["species"].isin(selected_species)]
+
+# Additionally, if the selected attribute is not None and drop NA values for that column
+    if selected_attribute:
+        filtered_df = filtered_df.dropna(subset=[selected_attribute])
+
+    return filtered_df
